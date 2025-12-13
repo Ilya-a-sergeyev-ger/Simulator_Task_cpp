@@ -1,0 +1,41 @@
+# Build directories
+build/
+cmake-build-*/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Compiled binaries
+task_simulator
+edge_cases_test
+*.exe
+*.out
+*.app
+
+# Object files
+*.o
+*.obj
+*.a
+*.so
+*.dll
+*.dylib
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test outputs
+Testing/
+CTestTestfile.cmake
+
+# Logs
+*.log

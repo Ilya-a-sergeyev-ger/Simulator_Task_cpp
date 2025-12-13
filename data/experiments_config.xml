@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hostconfigs>
+
+    <hostconfig name="simple">
+        <host id="HOST_0">
+            <cpu_cores>1</cpu_cores>
+            <ram>5000</ram>
+        </host>
+        <host id="HOST_1">
+            <cpu_cores>1</cpu_cores>
+            <ram>5000</ram>
+        </host>
+    </hostconfig>
+
+    <hostconfig name="simple_multicore">
+        <host id="HOST_0">
+            <cpu_cores>2</cpu_cores>
+            <ram>5000</ram>
+        </host>
+        <host id="HOST_1">
+            <cpu_cores>2</cpu_cores>
+            <ram>5000</ram>
+        </host>
+    </hostconfig>
+
+    <hostconfig name="simple_dependencies">
+        <host id="HOST_0">
+            <cpu_cores>1</cpu_cores>
+            <ram>5000</ram>
+        </host>
+        <host id="HOST_1">
+            <cpu_cores>1</cpu_cores>
+            <ram>5000</ram>
+        </host>
+    </hostconfig>
+
+    <hostconfig name="networked_dependencies">
+        <host id="HOST_0">
+            <cpu_cores>1</cpu_cores>
+            <ram>3000</ram>
+        </host>
+        <host id="HOST_1">
+            <cpu_cores>1</cpu_cores>
+            <ram>5000</ram>
+        </host>
+    </hostconfig>
+
+    <hostconfig name="ping_pong">
+        <host id="HOST_0">
+            <cpu_cores>1</cpu_cores>
+            <ram>3000</ram>
+        </host>
+        <host id="HOST_1">
+            <cpu_cores>1</cpu_cores>
+            <ram>3000</ram>
+        </host>
+    </hostconfig>
+
+    <hostconfig name="long_sleep">
+        <host id="HOST_0">
+            <cpu_cores>1</cpu_cores>
+            <ram>3000</ram>
+        </host>
+        <host id="HOST_1">
+            <cpu_cores>1</cpu_cores>
+            <ram>3000</ram>
+        </host>
+    </hostconfig>
+
+</hostconfigs>

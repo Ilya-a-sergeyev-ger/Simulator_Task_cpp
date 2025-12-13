@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<experiments>
+
+    <experiment name="simple">
+        <tasks>../data/1_simple.csv</tasks>
+        <host id="HOST_0">
+            <cpu_cores>1</cpu_cores>
+            <ram>5000</ram>
+        </host>
+        <host id="HOST_1">
+            <cpu_cores>1</cpu_cores>
+            <ram>5000</ram>
+        </host>
+    </experiment>
+
+    <experiment name="simple_multicore">
+        <tasks>../data/2_simple_multicore.csv</tasks>
+        <host id="HOST_0">
+            <cpu_cores>2</cpu_cores>
+            <ram>5000</ram>
+        </host>
+        <host id="HOST_1">
+            <cpu_cores>2</cpu_cores>
+            <ram>5000</ram>
+        </host>
+    </experiment>
+
+    <experiment name="simple_dependencies">
+        <tasks>../data/3_simple_dependencies.csv</tasks>
+        <host id="HOST_0">
+            <cpu_cores>1</cpu_cores>
+            <ram>5000</ram>
+        </host>
+        <host id="HOST_1">
+            <cpu_cores>1</cpu_cores>
+            <ram>5000</ram>
+        </host>
+    </experiment>
+
+    <experiment name="networked_dependencies">
+        <tasks>../data/4_networked_dependencies.csv</tasks>
+        <host id="HOST_0">
+            <cpu_cores>1</cpu_cores>
+            <ram>3000</ram>
+        </host>
+        <host id="HOST_1">
+            <cpu_cores>1</cpu_cores>
+            <ram>5000</ram>
+        </host>
+    </experiment>
+
+    <experiment name="ping_pong">
+        <tasks>../data/5_ping_pong.csv</tasks>
+        <host id="HOST_0">
+            <cpu_cores>1</cpu_cores>
+            <ram>3000</ram>
+        </host>
+        <host id="HOST_1">
+            <cpu_cores>1</cpu_cores>
+            <ram>3000</ram>
+        </host>
+    </experiment>
+
+    <experiment name="long_sleep">
+        <tasks>../data/6_long_sleep.csv</tasks>
+        <host id="HOST_0">
+            <cpu_cores>1</cpu_cores>
+            <ram>3000</ram>
+        </host>
+        <host id="HOST_1">
+            <cpu_cores>1</cpu_cores>
+            <ram>3000</ram>
+        </host>
+    </experiment>
+
+</experiments>

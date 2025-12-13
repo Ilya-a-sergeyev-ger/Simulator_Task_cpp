@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<experiments>
+    <experiment name="three_hosts">
+        <tasks>../data/test_3hosts_tasks.csv</tasks>
+        <host id="HOST_0">
+            <cpu_cores>1</cpu_cores>
+            <ram>3000</ram>
+        </host>
+        <host id="HOST_1">
+            <cpu_cores>1</cpu_cores>
+            <ram>3000</ram>
+        </host>
+        <host id="HOST_2">
+            <cpu_cores>1</cpu_cores>
+            <ram>3000</ram>
+        </host>
+    </experiment>
+</experiments>
