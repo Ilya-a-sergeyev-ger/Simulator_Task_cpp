@@ -305,20 +305,21 @@ TEST_F(EdgeCaseTest, LongDependencyChain) {
 // Simulation Runtime Tests
 // ============================================================================
 
-TEST_F(EdgeCaseTest, TaskRequiresMoreRAMThanHostCapacity) {
+TEST_F(EdgeCaseTest, TaskWaitsForRAMToBeReleased) {
     write_file("config.xml",
         "<?xml version=\"1.0\"?>\n"
         "<experiments>\n"
         "  <experiment name=\"test\">\n"
         "    <tasks>" + test_dir + "/tasks.csv</tasks>\n"
-        "    <host id=\"HOST_0\"><cpu_cores>1</cpu_cores><ram>1000</ram></host>\n"
+        "    <host id=\"HOST_0\"><cpu_cores>2</cpu_cores><ram>1000</ram></host>\n"
         "  </experiment>\n"
         "</experiments>\n"
     );
 
     write_file("tasks.csv",
         "TASK_NAME,TASK_HOST,TASK_INITIAL_SLEEP_TIME,TASK_RUN_TIME,TASK_RAM,TASK_NETWORK_TIME,TASK_DEPENDENCY\n"
-        "BigTask,HOST_0,0,10,5000,0,\n"
+        "Task1,HOST_0,0,10,800,0,\n"
+        "Task2,HOST_0,0,5,800,0,\n"
     );
 
     auto experiments = parsers::load_experiments_from_xml(test_dir + "/config.xml");
@@ -327,9 +328,10 @@ TEST_F(EdgeCaseTest, TaskRequiresMoreRAMThanHostCapacity) {
 
     simulator::TaskSimulator sim(experiment, tasks);
 
-    // SimCpp20 will abort with assertion failure when exception occurs in coroutine
-    // We expect the program to die with "Assertion.*failed" message
-    EXPECT_DEATH(sim.run(), "Assertion.*failed");
+    // Both tasks need 800 RAM but host only has 1000 total
+    // Task2 should wait for Task1 to release RAM before it can start
+    // Simulation should complete successfully
+    EXPECT_NO_THROW(sim.run());
 }
 
 TEST_F(EdgeCaseTest, TaskReferencesUnknownHost) {

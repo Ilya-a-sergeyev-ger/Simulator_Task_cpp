@@ -104,15 +104,7 @@ simcpp20::process<> task_process(
     // Step 4: Acquire resources (RAM and CPU)
     auto host = hosts.at(task.host);
 
-    // Check RAM capacity
-    if (task.ram > host->ram_capacity) {
-        throw std::runtime_error("Task " + task.name + " requires " +
-                               std::to_string(task.ram) + " RAM but host " +
-                               task.host + " only has " +
-                               std::to_string(host->ram_capacity) + " total capacity");
-    }
-
-    // Wait for available RAM
+    // Wait for available RAM (task will block until enough RAM is available)
     logger::debug("[{}]\t[t={}]\tTask {}: Waiting for {} RAM units",
                  task.host, static_cast<int>(sim.now()), task.name, task.ram);
 
