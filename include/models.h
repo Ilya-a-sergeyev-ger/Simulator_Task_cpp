@@ -76,15 +76,6 @@ struct ExperimentConfig {
     std::unordered_map<std::string, HostConfig> hosts;
     std::string tasks_csv_path;  // Path to CSV file with tasks
 
-    // Get configuration for a specific host
-    const HostConfig& get_host(const std::string& host_id) const {
-        auto it = hosts.find(host_id);
-        if (it == hosts.end()) {
-            throw std::out_of_range("Host '" + host_id + "' not found in configuration");
-        }
-        return it->second;
-    }
-
     void validate() const {
         if (hosts.empty()) {
             throw std::invalid_argument("Experiment configuration must have at least one host");
