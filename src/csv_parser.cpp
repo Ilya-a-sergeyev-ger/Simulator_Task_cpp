@@ -80,25 +80,8 @@ std::vector<models::Task> parse_tasks_csv(const std::string& csv_path) {
                 if (i > 0) error += ", ";
                 error += missing[i];
             }
+            throw std::runtime_error(error);
         }
-
-        // Check extra columns
-        std::vector<std::string> extra;
-        for (const auto& h : actual_headers) {
-            if (expected_headers.find(h) == expected_headers.end()) {
-                extra.push_back(h);
-            }
-        }
-        if (!extra.empty()) {
-            if (!missing.empty()) error += ". ";
-            error += "Extra columns: ";
-            for (size_t i = 0; i < extra.size(); i++) {
-                if (i > 0) error += ", ";
-                error += extra[i];
-            }
-        }
-
-        throw std::runtime_error(error);
     }
 
     // Create header index map
