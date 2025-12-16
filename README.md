@@ -27,6 +27,7 @@ sudo apt-get install cmake g++ libtinyxml2-dev libspdlog-dev libgtest-dev
 ## Building
 
 ```bash
+git submodule update --init --recursive
 mkdir build && cd build
 cmake ..
 make
