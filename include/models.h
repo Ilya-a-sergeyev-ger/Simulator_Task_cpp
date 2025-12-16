@@ -4,7 +4,7 @@
 #define MODELS_H_
 
 #include <string>
-#include <optional>
+#include <vector>
 #include <unordered_map>
 #include <stdexcept>
 
@@ -18,26 +18,15 @@ struct Task {
     int run_time;
     int ram;
     int network_time;
-    std::optional<std::string> dependency;
+    std::vector<std::string> dependencies;
+    std::vector<size_t> dependency_indices;
+    size_t index;
 
-    // Check if task has a dependency
+    // Check if task has dependencies
     bool has_dependency() const {
-        return dependency.has_value() && !dependency->empty();
+        return !dependency_indices.empty();
     }
 
-    // Check if task has a cross-host dependency
-    bool is_cross_host_dependency(const std::unordered_map<std::string, Task>& tasks_dict) const {
-        if (!has_dependency()) {
-            return false;
-        }
-
-        auto it = tasks_dict.find(*dependency);
-        if (it == tasks_dict.end()) {
-            throw std::runtime_error("Dependency '" + *dependency + "' not found for task '" + name + "'");
-        }
-
-        return it->second.host != host;
-    }
 
     // Validate task parameters
     void validate() const {

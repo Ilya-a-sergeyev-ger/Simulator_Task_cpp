@@ -54,7 +54,6 @@ simcpp20::process<> task_process(
     const std::unordered_map<std::string, HostPtr>& hosts,
     NetworkLinkPtr network,
     std::vector<simcpp20::event<>>& task_completed,
-    const std::unordered_map<std::string, size_t>& task_name_to_index,
     const std::vector<models::Task>& tasks) {
 
     // Step 1: Initial sleep
@@ -64,19 +63,14 @@ simcpp20::process<> task_process(
         co_await sim.timeout(task.initial_sleep_time);
     }
 
-    // Step 2: Wait for dependency if exists
-    if (task.has_dependency()) {
-        logger::debug("[{}]\t[t={}]\tTask {}: Waiting for dependency {}",
-                     task.host, static_cast<int>(sim.now()), task.name, *task.dependency);
-
-        // Find dependency index
-        size_t dep_index = task_name_to_index.at(*task.dependency);
-
-        // Wait for dependency task to complete, O(1) access
-        co_await task_completed[dep_index];
-
-        // Get dependency task for cross-host check
+    // Step 2: Wait for dependencies if exist
+    for (size_t dep_index : task.dependency_indices) {
         const auto& dep_task = tasks[dep_index];
+
+        logger::debug("[{}]\t[t={}]\tTask {}: Waiting for dependency {}",
+                     task.host, static_cast<int>(sim.now()), task.name, dep_task.name);
+
+        co_await task_completed[dep_index];
 
         // If cross-host dependency, wait for network transmission
         if (dep_task.host != task.host) {
@@ -85,7 +79,7 @@ simcpp20::process<> task_process(
 
                 logger::debug("[{}]\t[t={}]\tTask {}: Waiting for network transmission from {} ({} time units)",
                              task.host, static_cast<int>(sim.now()), task.name,
-                             *task.dependency, dep_task.network_time);
+                             dep_task.name, dep_task.network_time);
 
                 auto net_req = link->request();
                 co_await net_req;
@@ -148,11 +142,6 @@ TaskSimulator::TaskSimulator(const models::ExperimentConfig& config,
                             std::vector<models::Task>&& tasks)
     : tasks_(std::move(tasks)) {
 
-    // Build task name to index mapping (copy names to index table for fast access)
-    for (size_t i = 0; i < tasks_.size(); ++i) {
-        task_name_to_index_[tasks_[i].name] = i;
-    }
-
     // Create hosts
     std::vector<std::string> host_ids;
     for (const auto& [host_id, host_config] : config.hosts) {
@@ -187,7 +176,7 @@ void TaskSimulator::run(bool verbose) {
 
     // Schedule all tasks (start their coroutines)
     for (size_t i = 0; i < tasks_.size(); ++i) {
-        task_process(sim_, tasks_[i], i, hosts_, network_, task_completed_, task_name_to_index_, tasks_);
+        task_process(sim_, tasks_[i], i, hosts_, network_, task_completed_, tasks_);
     }
 
     // Run simulation

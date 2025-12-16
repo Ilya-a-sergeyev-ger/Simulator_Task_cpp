@@ -52,7 +52,6 @@ simcpp20::process<> task_process(
     const std::unordered_map<std::string, HostPtr>& hosts,
     NetworkLinkPtr network,
     std::vector<simcpp20::event<>>& task_completed,
-    const std::unordered_map<std::string, size_t>& task_name_to_index,
     const std::vector<models::Task>& tasks);
 
 // Main simulator for task execution
@@ -67,7 +66,6 @@ public:
 private:
     simcpp20::simulation<> sim_;
     std::vector<models::Task> tasks_;
-    std::unordered_map<std::string, size_t> task_name_to_index_;
     std::unordered_map<std::string, HostPtr> hosts_;
     NetworkLinkPtr network_;
     std::vector<simcpp20::event<>> task_completed_;

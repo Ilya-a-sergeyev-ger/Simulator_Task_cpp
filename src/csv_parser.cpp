@@ -114,9 +114,9 @@ std::vector<models::Task> parse_tasks_csv(const std::string& csv_path) {
             int network_time = std::stoi(fields[header_index["TASK_NETWORK_TIME"]]);
             std::string dependency_str = fields[header_index["TASK_DEPENDENCY"]];
 
-            std::optional<std::string> dependency;
+            std::vector<std::string> dependencies;
             if (!dependency_str.empty()) {
-                dependency = dependency_str;
+                dependencies.push_back(dependency_str);
             }
 
             models::Task task{
@@ -126,7 +126,9 @@ std::vector<models::Task> parse_tasks_csv(const std::string& csv_path) {
                 run_time,
                 ram,
                 network_time,
-                dependency
+                dependencies,
+                {},
+                tasks.size()
             };
 
             task.validate();
@@ -134,6 +136,22 @@ std::vector<models::Task> parse_tasks_csv(const std::string& csv_path) {
 
         } catch (const std::exception& e) {
             throw std::runtime_error("Error parsing row " + std::to_string(row_num) + ": " + e.what());
+        }
+    }
+
+    // Build name to index mapping
+    std::unordered_map<std::string, size_t> name_to_index;
+    for (const auto& task : tasks) {
+        name_to_index[task.name] = task.index;
+    }
+
+    // Resolve dependency names to indices
+    for (auto& task : tasks) {
+        for (const auto& dep_name : task.dependencies) {
+            auto it = name_to_index.find(dep_name);
+            if (it != name_to_index.end()) {
+                task.dependency_indices.push_back(it->second);
+            }
         }
     }
 
@@ -149,9 +167,7 @@ static bool has_cycle(const std::string& task_name,
     rec_stack.insert(task_name);
 
     const auto& task = task_dict.at(task_name);
-    if (task.has_dependency()) {
-        const auto& dep = *task.dependency;
-
+    for (const auto& dep : task.dependencies) {
         if (visited.find(dep) == visited.end()) {
             if (has_cycle(dep, task_dict, visited, rec_stack)) {
                 return true;
@@ -177,10 +193,10 @@ void validate_task_dependencies(const std::vector<models::Task>& tasks) {
 
     // Check that all dependencies exist
     for (const auto& task : tasks) {
-        if (task.has_dependency()) {
-            if (task_names.find(*task.dependency) == task_names.end()) {
+        for (const auto& dep : task.dependencies) {
+            if (task_names.find(dep) == task_names.end()) {
                 throw std::runtime_error("Task '" + task.name +
-                                       "' has undefined dependency: '" + *task.dependency + "'");
+                                       "' has undefined dependency: '" + dep + "'");
             }
         }
     }
