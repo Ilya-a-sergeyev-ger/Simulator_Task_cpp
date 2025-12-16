@@ -50,10 +50,12 @@ simcpp20::resource<>* NetworkLink::get_link(const std::string& from_host,
 simcpp20::process<> task_process(
     simcpp20::simulation<>& sim,
     const models::Task& task,
+    size_t task_index,
     const std::unordered_map<std::string, HostPtr>& hosts,
     NetworkLinkPtr network,
-    std::unordered_map<std::string, simcpp20::event<>>& task_completed,
-    const std::unordered_map<std::string, models::Task>& task_dict) {
+    std::vector<simcpp20::event<>>& task_completed,
+    const std::unordered_map<std::string, size_t>& task_name_to_index,
+    const std::vector<models::Task>& tasks) {
 
     // Step 1: Initial sleep
     if (task.initial_sleep_time > 0) {
@@ -67,13 +69,17 @@ simcpp20::process<> task_process(
         logger::debug("[{}]\t[t={}]\tTask {}: Waiting for dependency {}",
                      task.host, static_cast<int>(sim.now()), task.name, *task.dependency);
 
-        // Wait for dependency task to complete
-        co_await task_completed.at(*task.dependency);
+        // Find dependency index (once!)
+        size_t dep_index = task_name_to_index.at(*task.dependency);
+
+        // Wait for dependency task to complete - access complexity O(1)
+        co_await task_completed[dep_index];
+
+        // Get dependency task for cross-host check
+        const auto& dep_task = tasks[dep_index];  // access complexity O(1)
 
         // If cross-host dependency, wait for network transmission
-        if (task.is_cross_host_dependency(task_dict)) {
-            const auto& dep_task = task_dict.at(*task.dependency);
-
+        if (dep_task.host != task.host) {
             if (dep_task.network_time > 0) {
                 auto* link = network->get_link(dep_task.host, task.host);
 
@@ -133,8 +139,8 @@ simcpp20::process<> task_process(
     logger::debug("[{}]\t[t={}]\tTask {}: Released {} RAM units",
                  task.host, static_cast<int>(sim.now()), task.name, task.ram);
 
-    // Step 7: Mark task as completed
-    task_completed.at(task.name).trigger();
+    // Step 7: Mark task as completed - access complexity O(1)
+    task_completed[task_index].trigger();
 }
 
 // TaskSimulator implementation
@@ -142,9 +148,9 @@ TaskSimulator::TaskSimulator(const models::ExperimentConfig& config,
                             const std::vector<models::Task>& tasks)
     : tasks_(tasks) {
 
-    // Build task dict
-    for (const auto& task : tasks) {
-        task_dict_[task.name] = task;
+    // Build task name to index mapping (copy names to index table for fast access)
+    for (size_t i = 0; i < tasks.size(); ++i) {
+        task_name_to_index_[tasks[i].name] = i;
     }
 
     // Create hosts
@@ -158,9 +164,10 @@ TaskSimulator::TaskSimulator(const models::ExperimentConfig& config,
     // Create network link with all host IDs
     network_ = std::make_shared<NetworkLink>(sim_, host_ids);
 
-    // Create task completion events
-    for (const auto& task : tasks) {
-        task_completed_.emplace(task.name, sim_.event());
+    // Create task completion events - now a vector, access complexity is O(1)
+    task_completed_.reserve(tasks.size());
+    for (size_t i = 0; i < tasks.size(); ++i) {
+        task_completed_.emplace_back(sim_.event());
     }
 }
 
@@ -179,8 +186,8 @@ void TaskSimulator::run(bool verbose) {
     }
 
     // Schedule all tasks (start their coroutines)
-    for (const auto& task : tasks_) {
-        task_process(sim_, task, hosts_, network_, task_completed_, task_dict_);
+    for (size_t i = 0; i < tasks_.size(); ++i) {
+        task_process(sim_, tasks_[i], i, hosts_, network_, task_completed_, task_name_to_index_, tasks_);
     }
 
     // Run simulation
