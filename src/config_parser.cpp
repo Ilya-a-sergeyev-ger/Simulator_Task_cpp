@@ -13,6 +13,13 @@ load_experiments_from_xml(const std::string& xml_path) {
         throw std::runtime_error("Configuration file not found: " + xml_path);
     }
 
+    // Get the directory containing the XML file for resolving relative paths
+    std::filesystem::path xml_dir = std::filesystem::path(xml_path).parent_path();
+    if (xml_dir.empty()) {
+        xml_dir = ".";
+        
+    }
+   
     tinyxml2::XMLDocument doc;
     if (doc.LoadFile(xml_path.c_str()) != tinyxml2::XML_SUCCESS) {
         throw std::runtime_error("Failed to load XML file: " + xml_path);
@@ -45,6 +52,13 @@ load_experiments_from_xml(const std::string& xml_path) {
         }
         config.tasks_csv_path = tasks_elem->GetText();
 
+        std::filesystem::path csv_path = tasks_elem->GetText();
+        if (csv_path.is_relative()) {
+            csv_path = xml_dir / csv_path;
+            
+        }
+        config.tasks_csv_path = csv_path.lexically_normal().string();
+             
         // Iterate through host elements
         for (auto* host = experiment->FirstChildElement("host");
              host != nullptr;
