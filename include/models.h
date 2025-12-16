@@ -76,15 +76,17 @@ struct ExperimentConfig {
     std::unordered_map<std::string, HostConfig> hosts;
     std::string tasks_csv_path;  // Path to CSV file with tasks
 
-    void validate() const {
+    void validate(bool validate_hosts=false) const {
         if (hosts.empty()) {
             throw std::invalid_argument("Experiment configuration must have at least one host");
         }
         if (tasks_csv_path.empty()) {
             throw std::invalid_argument("Experiment configuration must specify tasks CSV path");
         }
-        for (const auto& [host_id, host_config] : hosts) {
-            host_config.validate();
+        if (validate_hosts) {
+            for (const auto& [host_id, host_config] : hosts) {
+                host_config.validate();
+            }
         }
     }
 };

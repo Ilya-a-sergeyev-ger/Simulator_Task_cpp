@@ -99,7 +99,7 @@ load_experiments_from_xml(const std::string& xml_path) {
                                    "' must have at least 1 host");
         }
 
-        config.validate();
+        config.validate(false);
         configs[name] = config;
     }
 
