@@ -59,7 +59,7 @@ simcpp20::process<> task_process(
 class TaskSimulator {
 public:
     TaskSimulator(const models::ExperimentConfig& config,
-                 const std::vector<models::Task>& tasks);
+                 std::vector<models::Task>&& tasks);
 
     // Run the simulation until all tasks complete
     void run(bool verbose = false);

@@ -69,14 +69,14 @@ simcpp20::process<> task_process(
         logger::debug("[{}]\t[t={}]\tTask {}: Waiting for dependency {}",
                      task.host, static_cast<int>(sim.now()), task.name, *task.dependency);
 
-        // Find dependency index (once!)
+        // Find dependency index
         size_t dep_index = task_name_to_index.at(*task.dependency);
 
-        // Wait for dependency task to complete - access complexity O(1)
+        // Wait for dependency task to complete, O(1) access
         co_await task_completed[dep_index];
 
         // Get dependency task for cross-host check
-        const auto& dep_task = tasks[dep_index];  // access complexity O(1)
+        const auto& dep_task = tasks[dep_index];
 
         // If cross-host dependency, wait for network transmission
         if (dep_task.host != task.host) {
@@ -139,18 +139,18 @@ simcpp20::process<> task_process(
     logger::debug("[{}]\t[t={}]\tTask {}: Released {} RAM units",
                  task.host, static_cast<int>(sim.now()), task.name, task.ram);
 
-    // Step 7: Mark task as completed - access complexity O(1)
+    // Step 7: Mark task as completed, O(1) access
     task_completed[task_index].trigger();
 }
 
 // TaskSimulator implementation
 TaskSimulator::TaskSimulator(const models::ExperimentConfig& config,
-                            const std::vector<models::Task>& tasks)
-    : tasks_(tasks) {
+                            std::vector<models::Task>&& tasks)
+    : tasks_(std::move(tasks)) {
 
     // Build task name to index mapping (copy names to index table for fast access)
-    for (size_t i = 0; i < tasks.size(); ++i) {
-        task_name_to_index_[tasks[i].name] = i;
+    for (size_t i = 0; i < tasks_.size(); ++i) {
+        task_name_to_index_[tasks_[i].name] = i;
     }
 
     // Create hosts
@@ -164,9 +164,9 @@ TaskSimulator::TaskSimulator(const models::ExperimentConfig& config,
     // Create network link with all host IDs
     network_ = std::make_shared<NetworkLink>(sim_, host_ids);
 
-    // Create task completion events - now a vector, access complexity is O(1)
-    task_completed_.reserve(tasks.size());
-    for (size_t i = 0; i < tasks.size(); ++i) {
+    // Create task completion events as a vector for O(1) access
+    task_completed_.reserve(tasks_.size());
+    for (size_t i = 0; i < tasks_.size(); ++i) {
         task_completed_.emplace_back(sim_.event());
     }
 }

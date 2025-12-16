@@ -326,7 +326,7 @@ TEST_F(EdgeCaseTest, TaskWaitsForRAMToBeReleased) {
     auto experiment = parsers::get_experiment_config(experiments, "test");
     auto tasks = parsers::parse_tasks_csv(test_dir + "/tasks.csv");
 
-    simulator::TaskSimulator sim(experiment, tasks);
+    simulator::TaskSimulator sim(experiment, std::move(tasks));
 
     // Both tasks need 800 RAM but host only has 1000 total
     // Task2 should wait for Task1 to release RAM before it can start
@@ -354,7 +354,7 @@ TEST_F(EdgeCaseTest, TaskReferencesUnknownHost) {
     auto experiment = parsers::get_experiment_config(experiments, "test");
     auto tasks = parsers::parse_tasks_csv(test_dir + "/tasks.csv");
 
-    simulator::TaskSimulator sim(experiment, tasks);
+    simulator::TaskSimulator sim(experiment, std::move(tasks));
 
     // SimCpp20 will abort when task tries to access unknown host in coroutine
     EXPECT_DEATH(sim.run(), "Assertion.*failed");
@@ -411,7 +411,7 @@ TEST_F(EdgeCaseTest, ValidLongDependencyChain) {
 
     parsers::validate_task_dependencies(tasks);
 
-    simulator::TaskSimulator sim(experiment, tasks);
+    simulator::TaskSimulator sim(experiment, std::move(tasks));
 
     // Should complete successfully
     EXPECT_NO_THROW(sim.run());
@@ -439,7 +439,7 @@ TEST_F(EdgeCaseTest, TaskWithZeroResources) {
 
     parsers::validate_task_dependencies(tasks);
 
-    simulator::TaskSimulator sim(experiment, tasks);
+    simulator::TaskSimulator sim(experiment, std::move(tasks));
 
     // Should complete successfully (task uses no resources)
     EXPECT_NO_THROW(sim.run());

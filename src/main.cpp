@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
 
         // Step 4: Run simulation
         logger::info("Initializing simulator...");
-        simulator::TaskSimulator sim(experiment, tasks);
+        simulator::TaskSimulator sim(experiment, std::move(tasks));
 
         logger::info("Starting simulation...");
         sim.run(args.verbose);
