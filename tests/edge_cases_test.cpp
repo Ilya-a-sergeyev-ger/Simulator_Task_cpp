@@ -354,10 +354,10 @@ TEST_F(EdgeCaseTest, TaskReferencesUnknownHost) {
     auto experiment = parsers::get_experiment_config(experiments, "test");
     auto tasks = parsers::parse_tasks_csv(test_dir + "/tasks.csv");
 
-    simulator::TaskSimulator sim(experiment, std::move(tasks));
-
-    // SimCpp20 will abort when task tries to access unknown host in coroutine
-    EXPECT_DEATH(sim.run(), "Assertion.*failed");
+    EXPECT_THROW(
+        simulator::TaskSimulator sim(experiment, std::move(tasks)),
+        std::runtime_error
+    );
 }
 
 TEST_F(EdgeCaseTest, UnknownExperimentName) {

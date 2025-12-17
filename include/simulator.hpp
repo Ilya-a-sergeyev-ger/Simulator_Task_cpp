@@ -30,16 +30,15 @@ using HostPtr = std::shared_ptr<Host>;
 // Represents a full-duplex network link between hosts
 class NetworkLink {
 public:
-    // Constructor takes list of host IDs to create links between all pairs
-    NetworkLink(simcpp20::simulation<>& sim, const std::vector<std::string>& host_ids);
+    // Constructor takes number of hosts to create links between all pairs
+    NetworkLink(simcpp20::simulation<>& sim, size_t num_hosts);
 
     // Get the appropriate network link for the given direction
-    simcpp20::resource<>* get_link(const std::string& from_host,
-                                   const std::string& to_host);
+    simcpp20::resource<>* get_link(size_t from_host_index, size_t to_host_index);
 
 private:
-    // Map from "from_host -> to_host" to network resource
-    std::map<std::pair<std::string, std::string>, std::unique_ptr<simcpp20::resource<>>> links_;
+    // Map from host index pair to network resource
+    std::map<std::pair<size_t, size_t>, std::unique_ptr<simcpp20::resource<>>> links_;
 };
 
 using NetworkLinkPtr = std::shared_ptr<NetworkLink>;
@@ -49,7 +48,7 @@ simcpp20::process<> task_process(
     simcpp20::simulation<>& sim,
     const models::Task& task,
     size_t task_index,
-    const std::unordered_map<std::string, HostPtr>& hosts,
+    const std::vector<HostPtr>& hosts,
     NetworkLinkPtr network,
     std::vector<simcpp20::event<>>& task_completed,
     const std::vector<models::Task>& tasks);
@@ -66,7 +65,7 @@ public:
 private:
     simcpp20::simulation<> sim_;
     std::vector<models::Task> tasks_;
-    std::unordered_map<std::string, HostPtr> hosts_;
+    std::vector<HostPtr> hosts_;
     NetworkLinkPtr network_;
     std::vector<simcpp20::event<>> task_completed_;
 };

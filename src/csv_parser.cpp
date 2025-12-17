@@ -128,7 +128,8 @@ std::vector<models::Task> parse_tasks_csv(const std::string& csv_path) {
                 network_time,
                 dependencies,
                 {},
-                tasks.size()
+                tasks.size(),
+                0
             };
 
             task.validate();

@@ -19,28 +19,27 @@ Host::Host(simcpp20::simulation<>& sim, const std::string& name,
 }
 
 // NetworkLink implementation
-NetworkLink::NetworkLink(simcpp20::simulation<>& sim, const std::vector<std::string>& host_ids) {
+NetworkLink::NetworkLink(simcpp20::simulation<>& sim, size_t num_hosts) {
     // Create full-duplex links between all pairs of hosts
-    for (const auto& from_host : host_ids) {
-        for (const auto& to_host : host_ids) {
-            if (from_host != to_host) {
-                // Create a unique network link for this direction
-                auto key = std::make_pair(from_host, to_host);
+    for (size_t from_idx = 0; from_idx < num_hosts; ++from_idx) {
+        for (size_t to_idx = 0; to_idx < num_hosts; ++to_idx) {
+            if (from_idx != to_idx) {
+                auto key = std::make_pair(from_idx, to_idx);
                 links_[key] = std::make_unique<simcpp20::resource<>>(sim, 1);
             }
         }
     }
 
-    logger::info("Network initialized with {} directional links for {} hosts", links_.size(), host_ids.size());
+    logger::info("Network initialized with {} directional links for {} hosts", links_.size(), num_hosts);
 }
 
-simcpp20::resource<>* NetworkLink::get_link(const std::string& from_host,
-                                            const std::string& to_host) {
-    auto key = std::make_pair(from_host, to_host);
+simcpp20::resource<>* NetworkLink::get_link(size_t from_host_index, size_t to_host_index) {
+    auto key = std::make_pair(from_host_index, to_host_index);
     auto it = links_.find(key);
 
     if (it == links_.end()) {
-        throw std::runtime_error("No network link from " + from_host + " to " + to_host);
+        throw std::runtime_error("No network link from host " + std::to_string(from_host_index) +
+                               " to host " + std::to_string(to_host_index));
     }
 
     return it->second.get();
@@ -51,7 +50,7 @@ simcpp20::process<> task_process(
     simcpp20::simulation<>& sim,
     const models::Task& task,
     size_t task_index,
-    const std::unordered_map<std::string, HostPtr>& hosts,
+    const std::vector<HostPtr>& hosts,
     NetworkLinkPtr network,
     std::vector<simcpp20::event<>>& task_completed,
     const std::vector<models::Task>& tasks) {
@@ -73,9 +72,9 @@ simcpp20::process<> task_process(
         co_await task_completed[dep_index];
 
         // If cross-host dependency, wait for network transmission
-        if (dep_task.host != task.host) {
+        if (dep_task.host_index != task.host_index) {
             if (dep_task.network_time > 0) {
-                auto* link = network->get_link(dep_task.host, task.host);
+                auto* link = network->get_link(dep_task.host_index, task.host_index);
 
                 logger::debug("[{}]\t[t={}]\tTask {}: Waiting for network transmission from {} ({} time units)",
                              task.host, static_cast<int>(sim.now()), task.name,
@@ -102,7 +101,7 @@ simcpp20::process<> task_process(
                  task.host, static_cast<int>(sim.now()), task.name);
 
     // Step 4: Acquire resources (RAM and CPU)
-    auto host = hosts.at(task.host);
+    auto host = hosts[task.host_index];
 
     // Wait for available RAM (task will block until enough RAM is available)
     logger::debug("[{}]\t[t={}]\tTask {}: Waiting for {} RAM units",
@@ -142,16 +141,27 @@ TaskSimulator::TaskSimulator(const models::ExperimentConfig& config,
                             std::vector<models::Task>&& tasks)
     : tasks_(std::move(tasks)) {
 
-    // Create hosts
-    std::vector<std::string> host_ids;
+    // Create hosts and build host name to index mapping
+    std::unordered_map<std::string, size_t> host_name_to_index;
+
     for (const auto& [host_id, host_config] : config.hosts) {
-        hosts_[host_id] = std::make_shared<Host>(
-            sim_, host_id, host_config.cpu_cores, host_config.ram);
-        host_ids.push_back(host_id);
+        size_t host_index = hosts_.size();
+        hosts_.push_back(std::make_shared<Host>(
+            sim_, host_id, host_config.cpu_cores, host_config.ram));
+        host_name_to_index[host_id] = host_index;
     }
 
-    // Create network link with all host IDs
-    network_ = std::make_shared<NetworkLink>(sim_, host_ids);
+    // Convert task host names to indices and validate
+    for (auto& task : tasks_) {
+        auto it = host_name_to_index.find(task.host);
+        if (it == host_name_to_index.end()) {
+            throw std::runtime_error("Task '" + task.name + "' references unknown host: '" + task.host + "'");
+        }
+        task.host_index = it->second;
+    }
+
+    // Create network link
+    network_ = std::make_shared<NetworkLink>(sim_, hosts_.size());
 
     // Create task completion events as a vector for O(1) access
     task_completed_.reserve(tasks_.size());
@@ -187,7 +197,7 @@ void TaskSimulator::run(bool verbose) {
 
     // Calculate total available CPU time across all hosts
     int total_cpu_cores = 0;
-    for (const auto& [host_id, host] : hosts_) {
+    for (const auto& host : hosts_) {
         total_cpu_cores += host->cpu_cores;
     }
     int total_cpu_time_available = total_cpu_cores * simulation_time;
@@ -208,14 +218,14 @@ void TaskSimulator::run(bool verbose) {
         logger::info("Host Statistics:");
         logger::info("----------------------------------------------------------------------");
 
-        for (const auto& [host_id, host] : hosts_) {
-            int host_cpu_work = cpu_work_per_host[host_id];
+        for (const auto& host : hosts_) {
+            int host_cpu_work = cpu_work_per_host[host->name];
             int host_cpu_available = host->cpu_cores * simulation_time;
             double host_utilization = (host_cpu_available > 0)
                 ? (static_cast<double>(host_cpu_work) / host_cpu_available * 100.0)
                 : 0.0;
 
-            logger::info("{} ({} cores):", host_id, host->cpu_cores);
+            logger::info("{} ({} cores):", host->name, host->cpu_cores);
             logger::info("  CPU work time:      {}", host_cpu_work);
             logger::info("  CPU available time: {} ({} cores × {})",
                         host_cpu_available, host->cpu_cores, simulation_time);
@@ -236,10 +246,10 @@ void TaskSimulator::run(bool verbose) {
     if (verbose) {
         logger::info("Total CPU available:    {}", total_cpu_time_available);
         logger::info("  Breakdown:");
-        for (const auto& [host_id, host] : hosts_) {
+        for (const auto& host : hosts_) {
             int host_cpu_available = host->cpu_cores * simulation_time;
             logger::info("    {}: {} cores × {} = {}",
-                        host_id, host->cpu_cores, simulation_time, host_cpu_available);
+                        host->name, host->cpu_cores, simulation_time, host_cpu_available);
         }
     } else {
         logger::info("Total CPU available:    {} ({} cores × {})",

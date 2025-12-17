@@ -21,6 +21,7 @@ struct Task {
     std::vector<std::string> dependencies;
     std::vector<size_t> dependency_indices;
     size_t index;
+    size_t host_index;
 
     // Check if task has dependencies
     bool has_dependency() const {
