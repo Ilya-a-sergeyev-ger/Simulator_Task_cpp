@@ -191,8 +191,8 @@ void TaskSimulator::run(bool verbose) {
     logger::info("======================================================================");
 
     // Calculate total CPU work time and per-host statistics
-    int total_cpu_work = 0;
-    std::unordered_map<std::string, int> cpu_work_per_host;
+    int64_t total_cpu_work = 0;
+    std::unordered_map<std::string, int64_t> cpu_work_per_host;
 
     for (const auto& task : tasks_) {
         total_cpu_work += task.run_time;
@@ -208,21 +208,21 @@ void TaskSimulator::run(bool verbose) {
     sim_.run();
 
     // Calculate metrics
-    int simulation_time = static_cast<int>(sim_.now());
+    int64_t simulation_time = static_cast<int64_t>(sim_.now());
 
     // Calculate total available CPU time across all hosts
-    int total_cpu_cores = 0;
+    int64_t total_cpu_cores = 0;
     for (const auto& host : hosts_) {
         total_cpu_cores += host->cpu_cores;
     }
-    int total_cpu_time_available = total_cpu_cores * simulation_time;
+    int64_t total_cpu_time_available = total_cpu_cores * simulation_time;
 
     // Calculate CPU utilization
     double cpu_utilization = (total_cpu_time_available > 0)
         ? (static_cast<double>(total_cpu_work) / total_cpu_time_available * 100.0)
         : 0.0;
 
-    int idle_time = total_cpu_time_available - total_cpu_work;
+    int64_t idle_time = total_cpu_time_available - total_cpu_work;
 
     logger::info("======================================================================");
     logger::info("Simulation completed at t={}", simulation_time);
@@ -234,8 +234,8 @@ void TaskSimulator::run(bool verbose) {
         logger::info("----------------------------------------------------------------------");
 
         for (const auto& host : hosts_) {
-            int host_cpu_work = cpu_work_per_host[host->name];
-            int host_cpu_available = host->cpu_cores * simulation_time;
+            int64_t host_cpu_work = cpu_work_per_host[host->name];
+            int64_t host_cpu_available = host->cpu_cores * simulation_time;
             double host_utilization = (host_cpu_available > 0)
                 ? (static_cast<double>(host_cpu_work) / host_cpu_available * 100.0)
                 : 0.0;
@@ -262,7 +262,7 @@ void TaskSimulator::run(bool verbose) {
         logger::info("Total CPU available:    {}", total_cpu_time_available);
         logger::info("  Breakdown:");
         for (const auto& host : hosts_) {
-            int host_cpu_available = host->cpu_cores * simulation_time;
+            int64_t host_cpu_available = host->cpu_cores * simulation_time;
             logger::info("    {}: {} cores × {} = {}",
                         host->name, host->cpu_cores, simulation_time, host_cpu_available);
         }

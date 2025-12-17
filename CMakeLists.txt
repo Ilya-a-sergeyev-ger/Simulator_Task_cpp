@@ -141,7 +141,7 @@ endif()
 
 include(GoogleTest)
 
-# Test executable
+# Test executables
 add_executable(edge_cases_test
     tests/edge_cases_test.cpp
 )
@@ -152,8 +152,19 @@ target_link_libraries(edge_cases_test
     ${GTEST_BOTH_LIBRARIES}
 )
 
+add_executable(performance_test
+    tests/performance_test.cpp
+)
+
+target_link_libraries(performance_test
+    parsers
+    simulator_lib
+    ${GTEST_BOTH_LIBRARIES}
+)
+
 # Discover tests
 gtest_discover_tests(edge_cases_test)
+gtest_discover_tests(performance_test)
 
 # Print build information
 message(STATUS "")
