@@ -33,6 +33,13 @@ cmake ..
 make
 ```
 
+## Tests
+
+```bash
+./edge_cases_test
+./performance_test --gtest_also_run_disabled_tests
+```
+
 ## Usage
 
 ```bash
