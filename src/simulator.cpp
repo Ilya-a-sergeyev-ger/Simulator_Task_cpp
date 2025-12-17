@@ -137,10 +137,15 @@ simcpp20::process<> task_process(
 }
 
 // TaskSimulator implementation
-TaskSimulator::TaskSimulator(const models::ExperimentConfig& config,
-                            std::vector<models::Task>&& tasks)
-    : tasks_(std::move(tasks)) {
 
+TaskSimulator::TaskSimulator(const models::ExperimentConfig& config,
+                             std::vector<models::Task>&& tasks)
+    : tasks_(std::move(tasks)) {
+    init(config, std::move(tasks));
+}
+
+void TaskSimulator::init(const models::ExperimentConfig& config, std::vector<models::Task>&& tasks) {
+    tasks_ = std::move(tasks);
     // Build task name to index mapping and resolve dependencies
     std::unordered_map<std::string, size_t> task_name_to_index;
     for (const auto& task : tasks_) {
@@ -183,9 +188,15 @@ TaskSimulator::TaskSimulator(const models::ExperimentConfig& config,
     for (size_t i = 0; i < tasks_.size(); ++i) {
         task_completed_.emplace_back(sim_.event());
     }
+
+    inited_ = true;
 }
 
 void TaskSimulator::run(bool verbose) {
+    if (!inited_) {
+        throw std::runtime_error("TaskSimulator not initialized. Call init() before run().");
+    }
+
     logger::info("======================================================================");
     logger::info("Starting simulation with {} tasks", tasks_.size());
     logger::info("======================================================================");

@@ -59,6 +59,10 @@ public:
     TaskSimulator(const models::ExperimentConfig& config,
                  std::vector<models::Task>&& tasks);
 
+    TaskSimulator() {}
+    void init(const models::ExperimentConfig& config,
+                 std::vector<models::Task>&& tasks);
+
     // Run the simulation until all tasks complete
     void run(bool verbose = false);
 
@@ -68,6 +72,7 @@ private:
     std::vector<HostPtr> hosts_;
     NetworkLinkPtr network_;
     std::vector<simcpp20::event<>> task_completed_;
+    bool inited_ = false;
 };
 
 } // namespace simulator
