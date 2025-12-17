@@ -140,22 +140,6 @@ std::vector<models::Task> parse_tasks_csv(const std::string& csv_path) {
         }
     }
 
-    // Build name to index mapping
-    std::unordered_map<std::string, size_t> name_to_index;
-    for (const auto& task : tasks) {
-        name_to_index[task.name] = task.index;
-    }
-
-    // Resolve dependency names to indices
-    for (auto& task : tasks) {
-        for (const auto& dep_name : task.dependencies) {
-            auto it = name_to_index.find(dep_name);
-            if (it != name_to_index.end()) {
-                task.dependency_indices.push_back(it->second);
-            }
-        }
-    }
-
     return tasks;
 }
 

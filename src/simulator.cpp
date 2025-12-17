@@ -141,6 +141,21 @@ TaskSimulator::TaskSimulator(const models::ExperimentConfig& config,
                             std::vector<models::Task>&& tasks)
     : tasks_(std::move(tasks)) {
 
+    // Build task name to index mapping and resolve dependencies
+    std::unordered_map<std::string, size_t> task_name_to_index;
+    for (const auto& task : tasks_) {
+        task_name_to_index[task.name] = task.index;
+    }
+
+    for (auto& task : tasks_) {
+        for (const auto& dep_name : task.dependencies) {
+            auto it = task_name_to_index.find(dep_name);
+            if (it != task_name_to_index.end()) {
+                task.dependency_indices.push_back(it->second);
+            }
+        }
+    }
+
     // Create hosts and build host name to index mapping
     std::unordered_map<std::string, size_t> host_name_to_index;
 
